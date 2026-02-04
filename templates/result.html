@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Result - LeafScan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest: #1a3d2e;
+            --sage: #4a6358;
+            --moss: #7a9b88;
+            --leaf: #a8c69f;
+            --cream: #f4f1e8;
+            --earth: #8b6f47;
+            --alert: #c85a54;
+            --success: #5a9b6f;
+            --warning: #d4a05c;
+            --glow: rgba(168, 198, 159, 0.2);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, #e8e4d9 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -10%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, -30px) scale(1.1); }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .leaf-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--forest), var(--sage));
+            border-radius: 50% 0 50% 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaf-icon::before {
+            content: '🌿';
+            font-size: 20px;
+            filter: grayscale(100%) brightness(2);
+        }
+
+        .logo-text {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--forest);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            animation: fadeIn 0.6s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .status-badge.success {
+            background: rgba(90, 155, 111, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.warning {
+            background: rgba(212, 160, 92, 0.15);
+            color: var(--warning);
+        }
+
+        .status-badge.alert {
+            background: rgba(200, 90, 84, 0.15);
+            color: var(--alert);
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2.5rem;
+            color: var(--forest);
+            margin-bottom: 12px;
+            animation: fadeIn 0.6s ease-out 0.3s both;
+        }
+
+        .subtitle {
+            color: var(--sage);
+            font-size: 1.1rem;
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 4px 20px rgba(26, 61, 46, 0.08),
+                0 0 0 1px rgba(26, 61, 46, 0.05);
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .image-section {
+            position: relative;
+        }
+
+        .uploaded-image {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(26, 61, 46, 0.15);
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .image-label {
+            text-align: center;
+            color: var(--moss);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .diagnosis-section h2 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.5rem;
+            color: var(--forest);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .diagnosis-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--leaf), var(--moss));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .disease-name {
+            background: linear-gradient(135deg, rgba(26, 61, 46, 0.05) 0%, rgba(168, 198, 159, 0.1) 100%);
+            padding: 24px;
+            border-radius: 16px;
+            border-left: 4px solid var(--forest);
+            margin-bottom: 30px;
+        }
+
+        .disease-name h3 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.8rem;
+            color: var(--forest);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .disease-label {
+            color: var(--sage);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .info-item {
+            background: rgba(168, 198, 159, 0.08);
+            padding: 18px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .info-item-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .info-item-content h4 {
+            color: var(--forest);
+            font-size: 1rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .info-item-content p {
+            color: var(--sage);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--forest), var(--sage));
+            color: white;
+            box-shadow: 0 4px 16px rgba(26, 61, 46, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(26, 61, 46, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--forest);
+            border: 2px solid var(--moss);
+        }
+
+        .btn-secondary:hover {
+            background: var(--leaf);
+            border-color: var(--forest);
+            transform: translateY(-2px);
+        }
+
+        .recommendations {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 4px 20px rgba(26, 61, 46, 0.08),
+                0 0 0 1px rgba(26, 61, 46, 0.05);
+            margin-top: 30px;
+            animation: fadeInUp 0.8s ease-out 0.7s both;
+        }
+
+        .recommendations h3 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.5rem;
+            color: var(--forest);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .recommendation-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(168, 198, 159, 0.05) 0%, rgba(74, 99, 88, 0.05) 100%);
+            border-radius: 12px;
+            border-left: 3px solid var(--leaf);
+        }
+
+        .recommendation-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--leaf), var(--moss));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .recommendation-content h4 {
+            color: var(--forest);
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .recommendation-content p {
+            color: var(--sage);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">
+                <div class="leaf-icon"></div>
+                <span class="logo-text">LeafScan</span>
+            </a>
+        </header>
+
+        <div style="text-align: center;">
+            {% if 'healthy' in prediction.lower() %}
+                <span class="status-badge success">✓ Analysis Complete</span>
+            {% else %}
+                <span class="status-badge alert">⚠ Disease Detected</span>
+            {% endif %}
+            <h1>Diagnosis Results</h1>
+            <p class="subtitle">AI-powered analysis of your plant sample</p>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-card image-section">
+                <img src="{{ url_for('static', filename='uploads/' + image_path.split('/')[-1]) }}" alt="Analyzed leaf" class="uploaded-image">
+                <p class="image-label">Uploaded Sample</p>
+            </div>
+
+            <div class="result-card diagnosis-section">
+                <h2>
+                    <span class="diagnosis-icon">🔬</span>
+                    Diagnosis
+                </h2>
+                
+                <div class="disease-name">
+                    <p class="disease-label">Detected Condition</p>
+                    <h3>{{ prediction.replace('_', ' ').replace('  ', ' - ') }}</h3>
+                </div>
+
+                <div class="info-grid">
+                    {% if 'healthy' in prediction.lower() %}
+                        <div class="info-item">
+                            <span class="info-item-icon">✅</span>
+                            <div class="info-item-content">
+                                <h4>Plant Status</h4>
+                                <p>Your plant appears to be healthy with no visible signs of disease.</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="info-item">
+                            <span class="info-item-icon">🦠</span>
+                            <div class="info-item-content">
+                                <h4>Disease Type</h4>
+                                <p>
+                                    {% if 'Bacterial' in prediction %}
+                                        Bacterial
+                                    {% elif 'blight' in prediction or 'spot' in prediction or 'Mold' in prediction or 'Septoria' in prediction %}
+                                        Fungal
+                                    {% elif 'virus' in prediction.lower() %}
+                                        Viral
+                                    {% elif 'mite' in prediction.lower() %}
+                                        Pest
+                                    {% else %}
+                                        Pathogenic
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="info-item">
+                        <span class="info-item-icon">🌱</span>
+                        <div class="info-item-content">
+                            <h4>Plant Type</h4>
+                            <p>{{ prediction.split('_')[0].replace('Pepper bell', 'Bell Pepper') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="info-item-icon">⚡</span>
+                        <div class="info-item-content">
+                            <h4>Analysis Method</h4>
+                            <p>ResNet50 Deep Learning Model</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommendations">
+            <h3>
+                <span class="diagnosis-icon">💡</span>
+                Recommendations
+            </h3>
+            <div class="recommendation-list">
+                {% if 'healthy' in prediction.lower() %}
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">1</span>
+                        <div class="recommendation-content">
+                            <h4>Continue Regular Care</h4>
+                            <p>Maintain your current watering and fertilization schedule to keep your plant healthy.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">2</span>
+                        <div class="recommendation-content">
+                            <h4>Monitor Regularly</h4>
+                            <p>Check your plants weekly for any signs of stress or disease to catch issues early.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">3</span>
+                        <div class="recommendation-content">
+                            <h4>Preventive Measures</h4>
+                            <p>Ensure proper spacing, air circulation, and avoid overhead watering to prevent disease.</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">1</span>
+                        <div class="recommendation-content">
+                            <h4>Isolate Affected Plants</h4>
+                            <p>Separate diseased plants from healthy ones to prevent spread of infection.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">2</span>
+                        <div class="recommendation-content">
+                            <h4>Remove Infected Leaves</h4>
+                            <p>Carefully remove and dispose of affected leaves to reduce disease pressure.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">3</span>
+                        <div class="recommendation-content">
+                            <h4>Apply Treatment</h4>
+                            <p>Consider appropriate fungicides, bactericides, or organic treatments based on disease type.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item">
+                        <span class="recommendation-number">4</span>
+                        <div class="recommendation-content">
+                            <h4>Consult an Expert</h4>
+                            <p>For severe infections, contact a local agricultural extension office or plant pathologist.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                🔍 Analyze Another Image
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary">
+                📄 Save Report
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Add entrance animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = document.querySelectorAll('.result-card, .recommendations, .actions');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${0.5 + index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>

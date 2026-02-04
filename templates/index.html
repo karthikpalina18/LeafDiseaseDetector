@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeafScan - AI Plant Disease Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest: #1a3d2e;
+            --sage: #4a6358;
+            --moss: #7a9b88;
+            --leaf: #a8c69f;
+            --cream: #f4f1e8;
+            --earth: #8b6f47;
+            --alert: #c85a54;
+            --glow: rgba(168, 198, 159, 0.2);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, #e8e4d9 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -10%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            left: -5%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(74, 99, 88, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, -30px) scale(1.1); }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .leaf-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--forest), var(--sage));
+            border-radius: 50% 0 50% 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: spin 3s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .leaf-icon::before {
+            content: '🌿';
+            font-size: 24px;
+            filter: grayscale(100%) brightness(2);
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--forest);
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--sage);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 24px;
+            padding: 60px 50px;
+            box-shadow: 
+                0 4px 20px rgba(26, 61, 46, 0.08),
+                0 0 0 1px rgba(26, 61, 46, 0.05);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upload-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--forest), var(--leaf), var(--earth));
+        }
+
+        .upload-area {
+            border: 3px dashed var(--moss);
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: linear-gradient(135deg, rgba(168, 198, 159, 0.03) 0%, rgba(74, 99, 88, 0.03) 100%);
+        }
+
+        .upload-area:hover {
+            border-color: var(--forest);
+            background: linear-gradient(135deg, rgba(168, 198, 159, 0.08) 0%, rgba(74, 99, 88, 0.08) 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--leaf);
+            background: linear-gradient(135deg, rgba(168, 198, 159, 0.15) 0%, rgba(74, 99, 88, 0.15) 100%);
+            border-style: solid;
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, var(--leaf), var(--moss));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .upload-text h3 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.75rem;
+            color: var(--forest);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .upload-text p {
+            color: var(--sage);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .file-types {
+            font-size: 0.875rem;
+            color: var(--moss);
+            margin-top: 16px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-preview {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(26, 61, 46, 0.1);
+            display: none;
+        }
+
+        .file-preview.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .preview-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin: 0 auto 20px;
+            display: block;
+            box-shadow: 0 8px 24px rgba(26, 61, 46, 0.12);
+        }
+
+        .file-name {
+            text-align: center;
+            color: var(--sage);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 18px 36px;
+            background: linear-gradient(135deg, var(--forest), var(--sage));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(26, 61, 46, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button[type="submit"]:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(26, 61, 46, 0.3);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .feature {
+            background: white;
+            padding: 32px 28px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(26, 61, 46, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(26, 61, 46, 0.12);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature h4 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.2rem;
+            color: var(--forest);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .feature p {
+            color: var(--sage);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(26, 61, 46, 0.1);
+            color: var(--moss);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .upload-card {
+                padding: 40px 30px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="leaf-icon"></div>
+            </div>
+            <h1>LeafScan</h1>
+            <p class="subtitle">Advanced AI-powered plant disease detection system. Upload a leaf image and get instant diagnosis with high accuracy.</p>
+        </header>
+
+        <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-card">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🍃</div>
+                    <div class="upload-text">
+                        <h3>Upload Leaf Image</h3>
+                        <p>Drag and drop your image here, or click to browse</p>
+                        <p class="file-types">Supports: JPG, PNG, JPEG</p>
+                    </div>
+                    <input type="file" name="leaf" id="fileInput" accept="image/*" required>
+                </div>
+
+                <div class="file-preview" id="filePreview">
+                    <img id="previewImg" class="preview-image" alt="Preview">
+                    <p class="file-name" id="fileName"></p>
+                    <button type="submit" id="submitBtn">
+                        Analyze Leaf Disease
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">🔬</span>
+                <h4>AI-Powered</h4>
+                <p>Deep learning model trained on thousands of plant disease images</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <h4>Instant Results</h4>
+                <p>Get accurate disease diagnosis in seconds</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🌱</span>
+                <h4>Multi-Crop Support</h4>
+                <p>Detects diseases in tomatoes, potatoes, and peppers</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by ResNet50 Deep Learning Architecture</p>
+        </footer>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewImg = document.getElementById('previewImg');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File selection
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    fileName.textContent = file.name;
+                    filePreview.classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Form submission
+        uploadForm.addEventListener('submit', (e) => {
+            submitBtn.textContent = 'Analyzing...';
+            submitBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
