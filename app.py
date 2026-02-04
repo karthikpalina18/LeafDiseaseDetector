@@ -7,7 +7,7 @@ import os
 
 
 # ✅ Auto Download Model If Not Present
-if not os.path.exists("leaf_model.h5"):
+if not os.path.exists("leaf_model_resnet50_final.h5"):
     import download_model
 
 # ✅ Load Model
@@ -18,7 +18,7 @@ print("✅ Model Loaded Successfully!")
 app = Flask(__name__)
 
 # ✅ Load Model
-model = tf.keras.models.load_model("leaf_disease_resnet50_final.h5")
+model = tf.keras.models.load_model("leaf_model_resnet50_final.h5")
 
 # ✅ Load Class Labels
 with open("class_labels.json") as f:
